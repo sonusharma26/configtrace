@@ -1,0 +1,10 @@
+export { run, type RunOptions, type RunResult } from './launcher';
+export { readTrace, writeTrace, UserError } from './core/io';
+export { TraceSchema, EventSchema, ValueSchema, SCHEMA_VERSION, TOOL_VERSION } from './core/schema';
+export type { Trace, Observation, SafeValue, Origin, Coverage, ProcessInfo, ComparisonKey } from './core/schema';
+export { createComparisonKey, writeComparisonKey, readComparisonKey } from './core/privacy';
+export { evidenceFor, explainText, diffTraces, diffText, compareValue } from './core/analyze';
+export type { TraceDiff, KeyEvidence, Equality, DiffRow } from './core/analyze';
+export { renderTraceHtml, renderDiffHtml } from './report/html';
+export { readExportPolicy, sanitizeTraces, exportArtifacts, ExportPolicySchema, type ExportPolicy } from './core/export';
+export { getActiveRecorder, type ConfigTraceAdapter, type AdapterContext } from './runtime/api';

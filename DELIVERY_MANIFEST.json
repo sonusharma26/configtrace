@@ -1,0 +1,337 @@
+{
+  "project": "ConfigTrace",
+  "version": "0.2.0",
+  "source_delivery_date": "2026-09-22",
+  "milestones": [
+    "v0.1 runtime evidence",
+    "v0.2 diagnostic reports and export"
+  ],
+  "execution": {
+    "dependencies_installed": true,
+    "build_run": true,
+    "typecheck_run": true,
+    "tests_run": true,
+    "demos_run": true,
+    "browser_rendering_run": false,
+    "ci_triggered": false,
+    "subagents_used": false
+  },
+  "validation_status": "local Node 24 validation passed; broader compatibility and browser validation remain pending",
+  "files": [
+    {
+      "path": ".editorconfig",
+      "bytes": 146,
+      "sha256": "1b88c898757f0c87b77b35640bc6a96c50f0f294a8a7504855d800fbe5dcc810"
+    },
+    {
+      "path": ".github/workflows/validate.yml",
+      "bytes": 488,
+      "sha256": "4ba60884c31ca832f1f0554da8cf2387cddaa627369ac2754ace6d8ff6a3d723"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 175,
+      "sha256": "ca7aef7fb16eaea18584ef9b1b55f902dc0dd0155bcbd42780e93a96c7597631"
+    },
+    {
+      "path": ".npmignore",
+      "bytes": 52,
+      "sha256": "00d30a3ebc430029bf03a05097de6ba758edb5901fd542273c33e8d494fccb67"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 1367,
+      "sha256": "a617f7406592de0a1d8a968d9cdf5c3310e8e4722a15b87cca1676ce32be8443"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 2938,
+      "sha256": "fd86c9dc2ae4009cd6b111108d1e0ae8876890ac2e65a20d35cf97e7b88f4b3b"
+    },
+    {
+      "path": "DELIVERY_NOTES.md",
+      "bytes": 1981,
+      "sha256": "48c035d13bd18e137f78e384393c8599274eba9bb38ac94d5cc2b64eb02b130a"
+    },
+    {
+      "path": "IMPLEMENTATION_PLAN.md",
+      "bytes": 6058,
+      "sha256": "57e569dc17343a0c42c7f870ed72642a2df979900d9d2c5f173d0bf22c248963"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1081,
+      "sha256": "5d40ee4c22e6af1158de15593b5eda6917473325da7750ae9741943ad66c7b1a"
+    },
+    {
+      "path": "README.md",
+      "bytes": 20462,
+      "sha256": "a5c9edae25457d9106b6c91ae8ff27feacb3c931b0996b9d8df946b33e7eb67f"
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 2489,
+      "sha256": "3fe00692ce3fac538fb92d10db42f6454f068601726b05eda29d86bd3b9f1b28"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 12008,
+      "sha256": "db38ac4e2e55cc2055bbd611ca891ca998d04296b3f723ea72fbf9b4230732c4"
+    },
+    {
+      "path": "docs/COMPATIBILITY.md",
+      "bytes": 5468,
+      "sha256": "dfd58300dd4b55791cd1856fde31fbf1f14d0fa66a8d3710e9e38792d589ffbc"
+    },
+    {
+      "path": "docs/PRIVACY.md",
+      "bytes": 5446,
+      "sha256": "e5aea83221aeff096ef6248b3e3bbfe08807dc765a3a6da2dd2f87a5114b3fad"
+    },
+    {
+      "path": "docs/RELEASE_CHECKLIST.md",
+      "bytes": 3476,
+      "sha256": "42aed254215a8157585caa98173048d7b5f7afedacb09c9f29dc33eb47f39f20"
+    },
+    {
+      "path": "docs/VALIDATION.md",
+      "bytes": 9232,
+      "sha256": "1713d247f4364123df3c93f7f67ac1a153b8afd79bcc7c56d3a0fc4a8286eb76"
+    },
+    {
+      "path": "examples/custom-adapter.cjs",
+      "bytes": 749,
+      "sha256": "30d1fc1354b92997dac2a0ab3371b76a6917780add4ea465be1fcf19ec716ca2"
+    },
+    {
+      "path": "fixtures/bypass/app.cjs",
+      "bytes": 330,
+      "sha256": "efc8eed74b20b8d9a7db49ec8f095e080606c70ea8c3e507623ccca7d34d9db4"
+    },
+    {
+      "path": "fixtures/bypass/early.cjs",
+      "bytes": 146,
+      "sha256": "15f045a3b18a29ff7ecc823a25c100b094924927f6f129593b3342757207b520"
+    },
+    {
+      "path": "fixtures/child-process/child.cjs",
+      "bytes": 78,
+      "sha256": "00f687ec82f1e8875cb36a18058e1d5f6fa29efe26721f6482b8e3cd18efaa06"
+    },
+    {
+      "path": "fixtures/child-process/parent.cjs",
+      "bytes": 363,
+      "sha256": "7ff4ac2d562707c9f01d6784d0adb569c5eb81b8a70c1cacafb23c1351fba7e1"
+    },
+    {
+      "path": "fixtures/custom-target/app.cjs",
+      "bytes": 279,
+      "sha256": "cb8d0bbba2239cfcb430470ece283635aba60f25b7b8268087c6c5516de93789"
+    },
+    {
+      "path": "fixtures/custom-target/sample.env",
+      "bytes": 66,
+      "sha256": "3f2518e1a0f7c2a86bb51cd0c173fabe5a565cfc2cb325a3d154fc5fa620d805"
+    },
+    {
+      "path": "fixtures/esm/app.mjs",
+      "bytes": 254,
+      "sha256": "7cf8f881577e4c12f47ef085eac854431c42fa8fed46955b5dc722c7f62afee8"
+    },
+    {
+      "path": "fixtures/exit-code/app.cjs",
+      "bytes": 148,
+      "sha256": "a530b96d87a4ad4bfc9eb32aa5c31d15fca45b688a137306ebdd8e516aefa331"
+    },
+    {
+      "path": "fixtures/load-order/app.cjs",
+      "bytes": 407,
+      "sha256": "3bd26752466f9650180a7c187b78271823f38a4bbc7df2d1530e1ba6448bf2c2"
+    },
+    {
+      "path": "fixtures/load-order/first.env",
+      "bytes": 36,
+      "sha256": "f33bd4ea4b2469a38e22845bffdfa5fceedd11f6dd1f1e49f644f90d8af14da2"
+    },
+    {
+      "path": "fixtures/load-order/second.env",
+      "bytes": 37,
+      "sha256": "cb1797baeb3acda693fff871c130c0bb522b532701546abbcbfb53c99bfd701e"
+    },
+    {
+      "path": "fixtures/manifest.json",
+      "bytes": 1989,
+      "sha256": "79502226e71f8bd3b9c05650570dcaedb75a5251f83163775d70ba1de8dbab1b"
+    },
+    {
+      "path": "fixtures/runtime-mutation/app.cjs",
+      "bytes": 522,
+      "sha256": "c6be573bfecf1674b268de393712ffb5aa68cf6e560cc6b689f273745d80d74c"
+    },
+    {
+      "path": "fixtures/source-map/input.ts",
+      "bytes": 235,
+      "sha256": "7ef20892aed7d2f96c2800523d28ccddc7d41da46c9aa04cc0d25e0baaa0af49"
+    },
+    {
+      "path": "fixtures/source-map/tsconfig.json",
+      "bytes": 206,
+      "sha256": "dfeb34d32be297723ba27b6a447d10ba8ce02a820afd413bb0956272027eb126"
+    },
+    {
+      "path": "fixtures/stale-inheritance/app.cjs",
+      "bytes": 246,
+      "sha256": "144dc211489e5d4c3a86e837f763cd047e073dc2faed1ff566856c21bdda3319"
+    },
+    {
+      "path": "fixtures/stale-inheritance/sample.env",
+      "bytes": 66,
+      "sha256": "3f2518e1a0f7c2a86bb51cd0c173fabe5a565cfc2cb325a3d154fc5fa620d805"
+    },
+    {
+      "path": "fixtures/worker/parent.cjs",
+      "bytes": 153,
+      "sha256": "169baed01b95e15df108be1ed1a5bef4cc47fe143eb97da20939e3885bdf8435"
+    },
+    {
+      "path": "fixtures/worker/worker.cjs",
+      "bytes": 113,
+      "sha256": "da1557c2cc347bf95740139c6df6a4c6a14392cc7c3747e64718e2c68b7a91a9"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 2936,
+      "sha256": "9bdc588933e02e0074064d90acebfe1d108088c46fd820e087a212dd5ef17139"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1093,
+      "sha256": "97d4ab40442f797af4e95b92377232922baaaef8d5091bf373f15e7adc4aeac5"
+    },
+    {
+      "path": "policies/issue-share.yaml",
+      "bytes": 303,
+      "sha256": "23bd342c4f161574f2a27248e60dfee02a8c2f35b9227203ae6f4ac9964b753b"
+    },
+    {
+      "path": "policies/minimal.yaml",
+      "bytes": 116,
+      "sha256": "ff5f5b509b0b8a965b9fa1d20245ffefc63439981aee3787e6ad5f4d9f484ae6"
+    },
+    {
+      "path": "scripts/clean.cjs",
+      "bytes": 154,
+      "sha256": "eddb70aaec3fd6de026e2ef6d7ebe0ab1be4cbae73d50646d178444110828497"
+    },
+    {
+      "path": "src/adapters/dotenv.ts",
+      "bytes": 10275,
+      "sha256": "faabdef7db8b24aebb97f365e040cc40fbeec69aa67af93fcf4e813994cb0117"
+    },
+    {
+      "path": "src/cli.ts",
+      "bytes": 9357,
+      "sha256": "df149b2329c1732f49db7711c3450057feaabc19732c65c87f86e95b5a6dff45"
+    },
+    {
+      "path": "src/core/analyze.ts",
+      "bytes": 10306,
+      "sha256": "379b6ed92ad664d17a09c8641aec3ad0b70eca4165f49804214bdd52c405783c"
+    },
+    {
+      "path": "src/core/collect.ts",
+      "bytes": 5501,
+      "sha256": "efd2f1d8ca41e8e9ca6007346a62cdde8ea892ae956de163d5203e27f2d5779e"
+    },
+    {
+      "path": "src/core/export.ts",
+      "bytes": 7840,
+      "sha256": "63d7b955cf1dfe636274e96efb4207399ca4b214f5946c6d3a85a3c4a4aa09d1"
+    },
+    {
+      "path": "src/core/io.ts",
+      "bytes": 3054,
+      "sha256": "6b27827545da717ecb77f1810f641cde7c84744f93ee11e7915f4ca460b1777d"
+    },
+    {
+      "path": "src/core/privacy.ts",
+      "bytes": 4079,
+      "sha256": "f0c27e7b237e6fb950b93bd5648a11fc1e88b97a7471a0904a3fbd69aeaadbd5"
+    },
+    {
+      "path": "src/core/schema.ts",
+      "bytes": 6710,
+      "sha256": "690d5afad3f3d165e13af9e3e49b00ff0aa45e0b671c0c3d9898f93fe8d98d5c"
+    },
+    {
+      "path": "src/demo.ts",
+      "bytes": 2115,
+      "sha256": "8358ad1308789d2dffb876e38e1a9ca458d877bcabb49c3b5d93792a2d3b457e"
+    },
+    {
+      "path": "src/index.ts",
+      "bytes": 897,
+      "sha256": "fadbe6effb6f2c9414c8955b5bf56a8bd5c243ea4a17ad353baebec80a71a4ab"
+    },
+    {
+      "path": "src/launcher.ts",
+      "bytes": 6247,
+      "sha256": "9ea08e0140a7da4f49a7e6b70a10b961c557c8835b6fcadc187bf73ddb3b2bff"
+    },
+    {
+      "path": "src/report/html.ts",
+      "bytes": 14964,
+      "sha256": "0c6c7ba742f1cb85d10555af9bf0768b71de076a47e252e1ff3f912c1dd51309"
+    },
+    {
+      "path": "src/runtime/api.ts",
+      "bytes": 1519,
+      "sha256": "e6017981d5a391ea929f722f28794b4cca7f1d267ed35c81b04a1e93eeb15f02"
+    },
+    {
+      "path": "src/runtime/callsite.ts",
+      "bytes": 2298,
+      "sha256": "e17d4fcc7c517edc4e3e5e9a3c73255d1e8e99d57b59cde446bf25c20454d748"
+    },
+    {
+      "path": "src/runtime/children.ts",
+      "bytes": 3237,
+      "sha256": "f371c1ee5135b0a759208e3761b29b961474400adc0bdcc61b4949036f88e082"
+    },
+    {
+      "path": "src/runtime/environment.ts",
+      "bytes": 2452,
+      "sha256": "224a5874c613de9e6a5af0bfbc3352a562c22a8f3c87479048de6e9308bc939a"
+    },
+    {
+      "path": "src/runtime/preload.ts",
+      "bytes": 3938,
+      "sha256": "d0128bf868456b400b7080e2126eaed9323f96239d4965438e080c4b6289ec9c"
+    },
+    {
+      "path": "src/runtime/recorder.ts",
+      "bytes": 7388,
+      "sha256": "8582bb942ff7eba68382bb3433942ece283189a8937307544c4c14acedc3284c"
+    },
+    {
+      "path": "tests/core.test.cjs",
+      "bytes": 5748,
+      "sha256": "5b46083a1ed52861b6c3a3dc147e005add44171f9f4884909f448fef107991f4"
+    },
+    {
+      "path": "tests/helpers.cjs",
+      "bytes": 1202,
+      "sha256": "a0a97618501a8f66bfdd327641e6270d00841776fca2071d281dd5c70eaabfb3"
+    },
+    {
+      "path": "tests/integration.test.cjs",
+      "bytes": 4602,
+      "sha256": "9d905f8b236bdccb45d6f428d8d30d933e807dd1a87bd981383ff00af6a86e8b"
+    },
+    {
+      "path": "tsconfig.json",
+      "bytes": 418,
+      "sha256": "adf84741f99a1b88d89cdc55285658e58ac128ac1c817b1c7b7ff5b46aac9c79"
+    }
+  ]
+}

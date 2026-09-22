@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "configtrace-fixtures/1",
+  "validationStatus": "not-run-in-this-delivery",
+  "fixtures": [
+    { "id": "stale-inheritance", "entry": "stale-inheritance/app.cjs", "watch": ["DATABASE_URL"], "expectation": "Existing preload value; dotenv candidate not applied; read links to startup with inferred confidence" },
+    { "id": "runtime-mutation", "entry": "runtime-mutation/app.cjs", "watch": ["CONFIGTRACE_FIXTURE"], "expectation": "Read, write, delete, missing, empty and defineProperty observations" },
+    { "id": "load-order", "entry": "load-order/app.cjs", "watch": ["CONFIGTRACE_FIXTURE"], "expectation": "Two file reads, first-wins merge, then override; merge provenance is inferred" },
+    { "id": "custom-target", "entry": "custom-target/app.cjs", "watch": ["DATABASE_URL"], "expectation": "Custom target warning; no fictitious process.env assignment" },
+    { "id": "child-process", "entry": "child-process/parent.cjs", "watch": ["CONFIGTRACE_FIXTURE"], "expectation": "With --children, root plus direct spawn and fork; no automatic cross-run process matching" },
+    { "id": "worker", "entry": "worker/parent.cjs", "watch": ["CONFIGTRACE_FIXTURE"], "expectation": "One root stream; worker coverage explicitly unsupported" },
+    { "id": "bypass", "entry": "bypass/app.cjs", "watch": ["CONFIGTRACE_FIXTURE"], "expectation": "Load early.cjs before ConfigTrace; original-object write is invisible; mismatched observed read remains unknown" },
+    { "id": "exit-code", "entry": "exit-code/app.cjs", "watch": ["CONFIGTRACE_FIXTURE"], "expectation": "Application stdout, stderr and exit 17 preserved" },
+    { "id": "esm", "entry": "esm/app.mjs", "watch": ["DATABASE_URL"], "expectation": "ESM default import of the cwd-resolved dotenv export receives the adapter" },
+    { "id": "source-map", "entry": "source-map/input.ts", "watch": ["DATABASE_URL"], "expectation": "After separately compiling this fixture, --source-maps maps the read to input.ts line 3" }
+  ]
+}

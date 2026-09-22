@@ -1,0 +1,27 @@
+{
+  "name": "configtrace",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Local runtime environment evidence, paired-run comparison, and reviewable diagnostic reports for Node.js",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": { "configtrace": "dist/cli.js" },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./preload": "./dist/runtime/preload.js",
+    "./adapter-api": { "types": "./dist/runtime/api.d.ts", "default": "./dist/runtime/api.js" }
+  },
+  "files": ["dist", "fixtures", "policies", "README.md", "LICENSE", "docs"],
+  "engines": { "node": ">=22.14.0 <23 || >=24 <25" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test tests/*.test.cjs",
+    "demo": "node dist/cli.js demo stale-env",
+    "clean": "node scripts/clean.cjs"
+  },
+  "dependencies": { "zod": "^3.25.76", "yaml": "^2.8.1" },
+  "devDependencies": { "@types/node": "^22.18.0", "dotenv": "17.2.3", "typescript": "^5.9.3" }
+}

@@ -1,0 +1,5 @@
+.configtrace/
+node_modules/
+tests/
+*.key.json
+.env*

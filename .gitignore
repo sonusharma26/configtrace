@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.configtrace/
+*.ct.json
+*.ct.jsonl
+*.key.json
+*.share/
+.env
+.env.local
+.env.*.local
+coverage/
+*.tgz
+!fixtures/**/sample.env
+fixtures/source-map/generated/
