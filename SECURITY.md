@@ -1,10 +1,10 @@
 # Security policy
 
-ConfigTrace 0.2.0 in this archive is an **unbuilt, untested source implementation**, not an audited release. Do not begin validation with production credentials or deploy it as an always-on production agent.
+ConfigTrace 0.2.0 has passed its local Node 24 build, focused tests, synthetic CLI workflow, package-content check, and dependency audit. It has not received an independent security audit or broad production validation. Start with synthetic values and do not deploy it as an always-on production agent without validating it for your environment.
 
 ## Report a vulnerability
 
-A public repository and maintainer security contact have not yet been configured. Before publishing, the maintainer must enable an appropriate private vulnerability-reporting channel and replace this section with real contact details. No invented email address or unconfigured GitHub security URL is supplied.
+Use the repository's private [GitHub Security Advisory form](https://github.com/sonusharma26/configtrace/security/advisories/new) when private vulnerability reporting is available. If that form is unavailable, contact the maintainer privately through their GitHub profile before sending sensitive details. Do not open a public issue containing an undisclosed vulnerability or secret-bearing artifact.
 
 Do not post real traces, key files, environment values or exploit reproductions containing secrets in a public issue. Use a minimal synthetic reproduction. Rotate any accidentally disclosed credentials through their actual provider.
 

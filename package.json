@@ -1,9 +1,22 @@
 {
   "name": "configtrace",
   "version": "0.2.0",
-  "private": true,
-  "description": "Local runtime environment evidence, paired-run comparison, and reviewable diagnostic reports for Node.js",
+  "description": "Find out which environment configuration a Node.js app actually uses without printing secret values",
+  "keywords": ["configuration", "debugging", "dotenv", "environment", "nodejs", "diagnostics", "cli"],
+  "author": "Sonu Sharma",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonusharma26/configtrace.git"
+  },
+  "homepage": "https://github.com/sonusharma26/configtrace#readme",
+  "bugs": {
+    "url": "https://github.com/sonusharma26/configtrace/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

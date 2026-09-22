@@ -24,9 +24,14 @@
       "sha256": "1b88c898757f0c87b77b35640bc6a96c50f0f294a8a7504855d800fbe5dcc810"
     },
     {
+      "path": ".github/workflows/publish.yml",
+      "bytes": 898,
+      "sha256": "81a60ad62acd0ffea2df72e8817a08e2170f6f3e2f4c0873a036e64eccfe7ea4"
+    },
+    {
       "path": ".github/workflows/validate.yml",
-      "bytes": 488,
-      "sha256": "4ba60884c31ca832f1f0554da8cf2387cddaa627369ac2754ace6d8ff6a3d723"
+      "bytes": 483,
+      "sha256": "e25908bfa935f677aba1a35883d05e6e13f438eb5a8eda99bbfb13187d41e0b8"
     },
     {
       "path": ".gitignore",
@@ -65,13 +70,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 20462,
-      "sha256": "a5c9edae25457d9106b6c91ae8ff27feacb3c931b0996b9d8df946b33e7eb67f"
+      "bytes": 5770,
+      "sha256": "fb87a9cc96f2ae6ff068932cc2a874c2e223d7c4635ed57dac4ebf946fe3f6dd"
     },
     {
       "path": "SECURITY.md",
-      "bytes": 2489,
-      "sha256": "3fe00692ce3fac538fb92d10db42f6454f068601726b05eda29d86bd3b9f1b28"
+      "bytes": 2718,
+      "sha256": "2e3173f80ad39a09c36e04c7f6eb3897d86578d40fc785df3f14780ed8883bcb"
     },
     {
       "path": "docs/ARCHITECTURE.md",
@@ -87,6 +92,11 @@
       "path": "docs/PRIVACY.md",
       "bytes": 5446,
       "sha256": "e5aea83221aeff096ef6248b3e3bbfe08807dc765a3a6da2dd2f87a5114b3fad"
+    },
+    {
+      "path": "docs/PUBLISHING.md",
+      "bytes": 2328,
+      "sha256": "367608328800e1dc58cb3fbd7683c578c589faa00b56f91904cb13670afd3ee8"
     },
     {
       "path": "docs/RELEASE_CHECKLIST.md",
@@ -205,8 +215,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 1093,
-      "sha256": "97d4ab40442f797af4e95b92377232922baaaef8d5091bf373f15e7adc4aeac5"
+      "bytes": 1551,
+      "sha256": "7f0a6cd05544444529a687c730233c83e35383ae7bc8947e0b2591fc639f4330"
     },
     {
       "path": "policies/issue-share.yaml",
