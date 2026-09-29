@@ -1,0 +1,65 @@
+{
+  "name": "configproof",
+  "version": "0.3.1",
+  "description": "Local-first configuration provenance, runtime contracts, deterministic diagnosis, and read-only agent evidence for Node.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonusharma26/configtrace.git"
+  },
+  "homepage": "https://github.com/sonusharma26/configtrace#readme",
+  "bugs": {
+    "url": "https://github.com/sonusharma26/configtrace/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "configproof": "dist/cli.js",
+    "configtrace": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./preload": "./dist/runtime/preload.js",
+    "./adapter-api": {
+      "types": "./dist/runtime/api.d.ts",
+      "default": "./dist/runtime/api.js"
+    }
+  },
+  "files": [
+    "dist",
+    "fixtures",
+    "policies",
+    "README.md",
+    "LICENSE",
+    "docs/ARCHITECTURE.md",
+    "docs/COMPATIBILITY.md",
+    "docs/PRIVACY.md",
+    "docs/VALIDATION.md"
+  ],
+  "engines": {
+    "node": ">=22.14.0 <23 || >=24 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test tests/*.test.cjs",
+    "demo": "node dist/cli.js demo stale-env",
+    "clean": "node scripts/clean.cjs"
+  },
+  "dependencies": {
+    "zod": "^3.25.76",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "dotenv": "17.2.3",
+    "typescript": "^5.9.3"
+  }
+}

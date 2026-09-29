@@ -1,0 +1,8 @@
+paths: omit
+keys:
+  redact: ["*"]
+include:
+  callSites: false
+  loaders: true
+  comparisons: true
+metadata: minimal

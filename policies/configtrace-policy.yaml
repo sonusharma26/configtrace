@@ -1,0 +1,23 @@
+# Configuration verification contract, not an export policy.
+version: 1
+coverage:
+  requireComplete: true
+  maxDroppedEvents: 0
+  requireFeatures:
+    - environment
+rules:
+  DATABASE_URL:
+    required: true
+    read: required
+    immutableAfterFirstRead: true
+    minimumConfidence: inferred
+    allowedOrigins:
+      - startup
+      - "dotenv:.env.production"
+      - "native-env:.env.production"
+  NODE_ENV:
+    required: true
+  "TEMP_*":
+    read: forbidden
+# Replace these example keys/origins with your application's captured identities.
+# A wildcard with no captured matches is inconclusive, not a passing absence check.

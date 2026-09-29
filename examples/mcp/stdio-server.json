@@ -1,0 +1,9 @@
+{
+  "command": "node",
+  "args": [
+    "/absolute/path/to/configtrace/dist/cli.js",
+    "mcp",
+    "--trace", "broken=/absolute/path/to/broken.ct.json",
+    "--trace", "working=/absolute/path/to/working.ct.json"
+  ]
+}

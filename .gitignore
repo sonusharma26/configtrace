@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.configtrace/
+*.ct.json
+*.ct.jsonl
+*.key.json
+*.share/
+.env
+.env.local
+.env.*.local
+coverage/
+*.tgz
+!fixtures/**/sample.env
+fixtures/source-map/generated/
+
+# Local delivery and planning artifacts
+DELIVERY_NOTES.md
+IMPLEMENTATION_PLAN.md
+FEATURE_STATUS.md
+DELIVERY_MANIFEST.json
+MANIFEST.sha256
+docs/PUBLISHING.md
+docs/REFERENCES.md
+docs/RELEASE_CHECKLIST.md
+docs/REQUESTED_FEATURES.md

@@ -1,0 +1,12 @@
+# Less restrictive than the built-in default, which pseudonymizes ALL key names.
+# Review project filenames and the remaining key names before sharing.
+paths: basename
+keys:
+  redact:
+    - "CUSTOMER_*"
+    - "INTERNAL_*"
+include:
+  callSites: true
+  loaders: true
+  comparisons: true
+metadata: minimal

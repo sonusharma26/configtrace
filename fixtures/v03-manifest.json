@@ -1,0 +1,32 @@
+{
+  "version": "0.3.0",
+  "validation": "not-run",
+  "fixtures": [
+    {
+      "name": "native-env",
+      "cases": [
+        "runtime apply",
+        "startup option declaration",
+        "existing-key skip inference",
+        "preserved native exception"
+      ]
+    },
+    {
+      "name": "worker-modes",
+      "cases": [
+        "copied",
+        "explicit",
+        "SHARE_ENV",
+        "execArgv override"
+      ]
+    },
+    {
+      "name": "failure-boundary",
+      "cases": [
+        "manual marker",
+        "post-marker reads",
+        "preserved exit 17"
+      ]
+    }
+  ]
+}

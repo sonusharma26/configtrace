@@ -1,0 +1,9 @@
+.configtrace/
+node_modules/
+tests/
+*.key.json
+.env*
+docs/PUBLISHING.md
+docs/REFERENCES.md
+docs/RELEASE_CHECKLIST.md
+docs/REQUESTED_FEATURES.md

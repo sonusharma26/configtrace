@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "CommonJS", "strict": true,
+    "outDir": "generated", "sourceMap": true, "types": ["node"], "skipLibCheck": true
+  },
+  "include": ["input.ts"]
+}
