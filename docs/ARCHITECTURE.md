@@ -52,3 +52,11 @@ Artifact parse/byte/event limits protect normal read paths; they are not an appl
 - `cli.ts`: validated command dispatch; execution is confined to explicit run/demo commands.
 
 See the README and requested-features document for scoped or unfinished behavior. No architecture claim is a test result.
+
+## Optimization patch
+
+The CLI dispatch now loads subsystems per command; schema constants live in a lightweight module and validators are still loaded for real validated IO. Runtime recorders reuse a prepared HMAC key and bounded path/source-map caches without changing event-write reliability or stack depth.
+
+Analysis builds one `TraceIndex` per unchanged trace/analysis lifetime. Context/key evidence points to original observations; shared queries remove repeated whole-array scans. Bounded derived summaries are admitted only while budget remains, avoiding FIFO thrash during ordered diff-then-diagnose passes. There is no global cache for caller-mutable traces. History carries adjacent indexes forward; the agent authorizer freezes its snapshots before retaining indexes.
+
+The collector parses UTF-8 JSONL incrementally with a 64 KiB read chunk and preserves existing limits and partial-capture semantics. Final JSON is compact. Offline HTML retains its presentation budgets but embeds dictionary-coded display tuples instead of repeated event/node markup; a fixed CSP-hashed renderer creates DOM text locally. See PERFORMANCE.md for measurement scope and limitations.

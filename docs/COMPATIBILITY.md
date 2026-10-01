@@ -1,6 +1,6 @@
-# Compatibility targets — NOT validated
+# Compatibility targets
 
-Every entry below is a source-level target. No platform, runtime, library, browser, or MCP client was exercised during this update. Existing v0.2 claims were not upgraded into test results.
+Every entry below is a broad source-level target, not a result inferred from the focused optimization checks. Existing v0.2/v0.3 coverage targets were not upgraded into complete compatibility test results.
 
 | Area | Target | Status / limitation |
 |---|---|---|
@@ -16,7 +16,7 @@ Every entry below is a source-level target. No platform, runtime, library, brows
 | HTML | Browser supporting inline SHA-256 CSP and local JS/DOM | Unrun; no browser or accessibility audit. |
 | MCP | Tools-only stdio; 2025-11-25 / 2025-06-18 negotiation | Unrun; no HTTP transport and no verified named-client configuration. |
 | Legacy artifact | configtrace/1, toolVersion 0.2.0 | Reader code accepts it; backward-read tests are unrun. |
-| Current artifact | configtrace/2, toolVersion 0.3.1 | Current capture target. |
+| Current artifact | configtrace/2, toolVersion 0.4.0 | Current capture target. |
 | node-config / convict / NestJS | No implementation | Planned catalog entries only. |
 
 Native-addon access, original process.env references, pre-instrumentation history, replaced environment objects, early/nested lifecycle paths, build-time/browser substitution, and late exit-handler operations are not fully observed.

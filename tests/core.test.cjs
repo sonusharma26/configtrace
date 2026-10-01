@@ -73,7 +73,7 @@ test('offline HTML escapes executable metadata and never embeds value tokens', (
   trace.events[0].site.file = '</script><img src=x onerror=alert(1)>';
   const html = renderTraceHtml(trace);
   assert.ok(!html.includes('<img src=x onerror=alert(1)>'));
-  assert.ok(html.includes('&lt;/script&gt;'));
+  assert.ok(html.includes('&lt;/script&gt;') || html.includes('\\u003c/script\\u003e'));
   assert.ok(html.includes('Content-Security-Policy'));
   assert.ok(!html.includes(trace.events[0].value.token));
 });

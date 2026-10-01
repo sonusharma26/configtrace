@@ -9,7 +9,7 @@ npm run build
 npm test
 ```
 
-These commands passed locally for the v0.3.1 release snapshot. Repeat them in a clean checkout and on each supported Node runtime before publishing. Resolve actual failures before marking anything complete. Use synthetic values and an isolated development directory.
+These commands are required before publishing. Repeat them in a clean checkout and on each supported Node runtime before expanding compatibility claims. Resolve actual failures before marking anything complete. Use synthetic values and an isolated development directory.
 
 ## Extended acceptance checklist
 

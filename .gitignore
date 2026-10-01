@@ -23,3 +23,10 @@ docs/PUBLISHING.md
 docs/REFERENCES.md
 docs/RELEASE_CHECKLIST.md
 docs/REQUESTED_FEATURES.md
+
+# Local optimization handoff and benchmark output
+BASELINE_VERIFICATION.json
+OPTIMIZATION_CHANGES.json
+OPTIMIZATION_HANDOFF.md
+bench/results/
+docs/optimization-results/

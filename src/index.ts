@@ -21,3 +21,6 @@ export { AdapterManifestSchema } from './core/schema';
 export type { AdapterManifest, AdapterDeclaration } from './core/schema';
 export { markFailureBoundary } from './runtime/api';
 export { EvidenceMcpServer, loadAuthorizedTraces, serveMcp } from './agent/server';
+
+export { TraceIndex, buildTraceIndex } from './core/event-index';
+export type { ComparisonIndexes } from './core/event-index';

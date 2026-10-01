@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — analysis and report optimization, 2026-10-01
+
+- Exact-key watch lookup; prepared recorder fingerprints; bounded path/source-map caches.
+- Lazy CLI modules and shared process/key evidence indexing for existing analysis consumers.
+- Incremental bounded JSONL reads and compact trace JSON, without changing schema or capture limits.
+- Compact token-free offline report display data, preserving filters/links and display budgets.
+- Reduced npm publish allowlist while retaining runtime dependencies and the locked dependency graph.
+- Added focused regression tests, baseline differential oracles, and reproducible benchmark scripts.
+- Added reusable trace-index helpers to the public library API.
+
+
 ## 0.3.0 — source-only update, 2026-09-28
 
 Added bounded provenance DAGs, native env loader observations and early option declarations, configuration contracts, deterministic diagnosis and failure markers, opt-in Worker capture, ordered local history, graph/timeline reports, a structured diagnosis API, and a tools-only read-only MCP server.

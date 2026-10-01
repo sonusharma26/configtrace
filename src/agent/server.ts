@@ -1,3 +1,4 @@
+import { TraceIndex } from '../core/event-index';
 import fs from 'node:fs';
 import type { Readable, Writable } from 'node:stream';
 import { z } from 'zod';
@@ -51,6 +52,15 @@ function publicEvent(e: Observation): Record<string, unknown> {
     childId: e.childId, environmentMode: e.environmentMode, phase: e.phase, loaderMethod: e.loaderMethod, boundaryKind: e.boundaryKind };
 }
 
+const immutableSnapshots = new WeakSet<Trace>();
+function freezeSnapshot<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) freezeSnapshot(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 /** Read once at startup. Tool calls can select aliases, not open paths or launch applications. */
 export function loadAuthorizedTraces(specifications: string[]): Map<string, Trace> {
   if (!specifications.length || specifications.length > 16) throw new UserError('MCP needs 1–16 explicit --trace ALIAS=FILE authorizations.');
@@ -69,12 +79,21 @@ export function loadAuthorizedTraces(specifications: string[]): Map<string, Trac
     const trace = readTrace(file);
     events += trace.events.length;
     if (events > 250000) throw new UserError('Authorized artifacts exceed the 250000 event budget.', 65);
+    freezeSnapshot(trace); immutableSnapshots.add(trace);
     traces.set(alias, trace);
   }
   return traces;
 }
 
 export class EvidenceMcpServer {
+  private readonly indexes = new WeakMap<Trace, TraceIndex>();
+  private index(trace: Trace): TraceIndex {
+    // Mutable caller-provided traces are intentionally re-indexed on every request.
+    if (!immutableSnapshots.has(trace)) return new TraceIndex(trace);
+    let index = this.indexes.get(trace);
+    if (!index) { index = new TraceIndex(trace); this.indexes.set(trace, index); }
+    return index;
+  }
   private state: 'new' | 'initializing' | 'ready' = 'new';
   constructor(private readonly traces: ReadonlyMap<string, Trace>) {}
   private trace(alias: string): Trace {
@@ -92,7 +111,7 @@ export class EvidenceMcpServer {
           coverage: t.coverage })) };
       }
       case 'explain_key': {
-        const a = explainArgs.parse(args), trace = this.trace(a.trace), e = evidenceFor(trace, a.key, a.process);
+        const a = explainArgs.parse(args), trace = this.trace(a.trace), e = evidenceFor(trace, a.key, a.process, this.index(trace));
         const selected = e.events.slice(a.offset, a.offset + a.limit);
         return { schemaVersion: 'configtrace-agent-explanation/1', trace: a.trace, key: e.key, processId: e.processId,
           capture: trace.capture.status, coverage: trace.coverage, notices: trace.capture.notices,
@@ -103,8 +122,15 @@ export class EvidenceMcpServer {
           caveat: 'Values and fingerprints are withheld. Metadata may remain sensitive; use reviewed exports. Missing events do not prove unused configuration.' };
       }
       case 'provenance': { const a = graphArgs.parse(args); return buildProvenance(this.trace(a.trace), { key: a.key, processId: a.process, maxNodes: a.maxNodes, maxEdges: a.maxNodes * 3 }); }
-      case 'diagnose': { const a = diagnoseArgs.parse(args); return diagnoseTraces(this.trace(a.broken), this.trace(a.working), a); }
-      case 'verify': { const a = verifyArgs.parse(args); return verifyTrace(this.trace(a.trace), a.policy, { processId: a.process, reference: a.reference ? this.trace(a.reference) : undefined, referenceProcess: a.referenceProcess }); }
+      case 'diagnose': {
+        const a = diagnoseArgs.parse(args), broken = this.trace(a.broken), working = this.trace(a.working);
+        return diagnoseTraces(broken, working, { ...a, leftIndex: this.index(broken), rightIndex: this.index(working) });
+      }
+      case 'verify': {
+        const a = verifyArgs.parse(args), trace = this.trace(a.trace), reference = a.reference ? this.trace(a.reference) : undefined;
+        return verifyTrace(trace, a.policy, { processId: a.process, reference, referenceProcess: a.referenceProcess,
+          index: this.index(trace), referenceIndex: reference ? this.index(reference) : undefined });
+      }
       case 'history': { const a = historyArgs.parse(args); return analyzeHistory(a.traces.map(alias => ({ label: alias, trace: this.trace(alias) }))); }
       default: throw new UserError('Unknown read-only evidence tool.', 65);
     }

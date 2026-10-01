@@ -2,20 +2,9 @@
 import path from 'node:path';
 import os from 'node:os';
 import { parseArgs } from 'node:util';
-import { run } from './launcher';
 import { readTrace, writeNew, UserError, terminalSafe } from './core/io';
-import { TOOL_VERSION } from './core/schema';
-import { writeComparisonKey } from './core/privacy';
-import { evidenceFor, explainText, diffTraces, diffText } from './core/analyze';
-import { renderTraceHtml, renderDiffHtml } from './report/html';
-import { readExportPolicy, exportArtifacts } from './core/export';
-import { buildProvenance } from './analysis/provenance';
-import { diagnoseTraces, diagnosisText } from './analysis/diagnose';
-import { verifyTrace, verificationText, readVerificationPolicy } from './analysis/policy';
-import { addHistory, analyzeHistory, readHistory, historyText } from './analysis/history';
-import { loadAuthorizedTraces, serveMcp } from './agent/server';
-import { adapterCatalog } from './adapters/registry';
-import { createDemo } from './demo';
+
+import { TOOL_VERSION } from './core/constants';
 
 const HELP = `ConfigProof ${TOOL_VERSION} — local configuration provenance and forensics
 
@@ -112,8 +101,12 @@ async function main(): Promise<void> {
   const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
   const pairOptions = { leftProcess: v['left-process'], rightProcess: v['right-process'] };
   switch (command) {
-    case 'keygen': count(0); writeComparisonKey(requireOut()); process.stdout.write('Private pair key created. Do not commit or share it.\n'); break;
+    case 'keygen': {
+      count(0); const { writeComparisonKey } = await import('./core/privacy');
+      writeComparisonKey(requireOut()); process.stdout.write('Private pair key created. Do not commit or share it.\n'); break;
+    }
     case 'run': {
+      const { run } = await import('./launcher');
       count(0);
       const result = await run({ command: program, watch: v.watch || [], out: requireOut(), cwd: v.cwd,
         keyFile: v.key, compareWith: v['compare-with'], children: v.children, workers: v.workers,
@@ -129,41 +122,56 @@ async function main(): Promise<void> {
       break;
     }
     case 'explain': {
+      const { evidenceFor, explainText } = await import('./core/analyze');
+      const { buildProvenance } = await import('./analysis/provenance');
       count(1); if (!v.from) throw new UserError('--from is required.');
       const trace = readTrace(v.from), graph = buildProvenance(trace, { key: p[0], processId: v.process });
       output(format(['text','json']) === 'json' ? json({ ...evidenceFor(trace, p[0], v.process), provenance: graph })
         : explainText(trace, p[0], v.process) + `\nProvenance: ${graph.nodes.length} nodes, ${graph.edges.length} links${graph.truncated ? ' (limited)' : ''}. Use --format json for the DAG.\n`);
       break;
     }
-    case 'graph': count(1); output(json(buildProvenance(readTrace(p[0]), { key: v.key, processId: v.process }))); break;
+    case 'graph': {
+      count(1); const { buildProvenance } = await import('./analysis/provenance');
+      output(json(buildProvenance(readTrace(p[0]), { key: v.key, processId: v.process }))); break;
+    }
     case 'diff': {
+      const { diffTraces, diffText } = await import('./core/analyze');
       count(2); const left = readTrace(p[0]), right = readTrace(p[1]), result = diffTraces(left, right, pairOptions);
       const kind = format(['text','json','html']);
-      if (kind === 'html') writeNew(requireOut(), renderDiffHtml(left, right, result));
+      if (kind === 'html') {
+        const { renderDiffHtml } = await import('./report/html');
+        writeNew(requireOut(), renderDiffHtml(left, right, result));
+      }
       else output(kind === 'json' ? json(result) : diffText(result));
       if (v['fail-on-diff']) process.exitCode = !result.sameDomain || !result.completeStreams || !result.leftProcess || !result.rightProcess || result.coverageChanged ? 3 : result.changed ? 2 : 0;
       break;
     }
     case 'diagnose': {
+      const { diagnoseTraces, diagnosisText } = await import('./analysis/diagnose');
       count(2); const result = diagnoseTraces(readTrace(p[0]), readTrace(p[1]), { ...pairOptions,
         beforeSeq: v['before-seq'] === undefined ? undefined : Number(v['before-seq']), limit: v.limit === undefined ? undefined : Number(v.limit) });
       output(format(['text','json']) === 'json' ? json(result) : diagnosisText(result)); break;
     }
     case 'verify': {
+      const { verifyTrace, verificationText, readVerificationPolicy } = await import('./analysis/policy');
       count(1); if (!v.policy) throw new UserError('--policy is required.');
       const result = verifyTrace(readTrace(p[0]), readVerificationPolicy(v.policy), { processId: v.process,
         reference: v.reference ? readTrace(v.reference) : undefined, referenceProcess: v['reference-process'] });
       output(format(['text','json']) === 'json' ? json(result) : verificationText(result)); process.exitCode = result.exitCode; break;
     }
     case 'report': {
+      const { renderTraceHtml, renderDiffHtml } = await import('./report/html');
+      const { diffTraces } = await import('./core/analyze');
       count(1,2); const a = readTrace(p[0]), b = p[1] ? readTrace(p[1]) : undefined;
       writeNew(requireOut(), b ? renderDiffHtml(a, b, diffTraces(a, b, pairOptions)) : renderTraceHtml(a)); break;
     }
     case 'export': {
+      const { readExportPolicy, exportArtifacts } = await import('./core/export');
       count(1,2); const files = exportArtifacts(p.map(readTrace), requireOut(), readExportPolicy(v.policy));
       process.stdout.write(`Created ${files.length} export file(s). Review metadata before sharing.\n`); break;
     }
     case 'history': {
+      const { addHistory, analyzeHistory, readHistory, historyText } = await import('./analysis/history');
       count(2);
       if (p[0] === 'add') {
         if (!v.dir) throw new UserError('history add needs --dir.');
@@ -178,8 +186,12 @@ async function main(): Promise<void> {
       } else throw new UserError('History actions: add or analyze.');
       break;
     }
-    case 'mcp': count(0); await serveMcp(loadAuthorizedTraces(v.trace || [])); break;
+    case 'mcp': {
+      count(0); const { loadAuthorizedTraces, serveMcp } = await import('./agent/server');
+      await serveMcp(loadAuthorizedTraces(v.trace || [])); break;
+    }
     case 'adapters': {
+      const { adapterCatalog } = await import('./adapters/registry');
       count(0); const catalog = adapterCatalog(); output(format(['text','json']) === 'json' ? json(catalog)
         : terminalSafe(catalog.map(a => `${a.manifest.id}: ${a.state}\n  ${a.manifest.supportedVersions}\n  ${a.manifest.knownBypasses.join('; ')}`).join('\n'), true) + '\n'); break;
     }
@@ -189,7 +201,11 @@ async function main(): Promise<void> {
         : terminalSafe(`Capture: ${trace.capture.status}\n${trace.coverage.map(c => `${c.feature}: ${c.status} — ${c.reasons.join(', ')}`).join('\n')}\nNotices: ${trace.capture.notices.join(', ')}\n`, true));
       process.exitCode = trace.capture.status === 'complete' ? 0 : 3; break;
     }
-    case 'demo': count(1); if (p[0] !== 'stale-env') throw new UserError('Available demo: stale-env.'); process.stdout.write(`Synthetic demo written to ${terminalSafe(await createDemo(v.out))}\n`); break;
+    case 'demo': {
+      count(1); if (p[0] !== 'stale-env') throw new UserError('Available demo: stale-env.');
+      const { createDemo } = await import('./demo');
+      process.stdout.write(`Synthetic demo written to ${terminalSafe(await createDemo(v.out))}\n`); break;
+    }
   }
 }
 main().catch(error => {

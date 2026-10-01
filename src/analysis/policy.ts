@@ -1,3 +1,4 @@
+import { TraceIndex } from '../core/event-index';
 import { z } from 'zod';
 import { parseDocument } from 'yaml';
 import type { Trace, Observation, Origin, Coverage } from '../core/schema';
@@ -56,7 +57,7 @@ function originIdentity(e: Observation): string | undefined {
   return `${o.kind}${o.kind === 'adapter' && o.adapterId ? ':' + o.adapterId : o.file ? ':' + o.file : ''}`;
 }
 /** Policies are evaluated over captured evidence. Absence under inadequate coverage is not a pass. */
-export function verifyTrace(trace: Trace, supplied: unknown, options: { processId?: string; reference?: Trace; referenceProcess?: string } = {}): VerificationResult {
+export function verifyTrace(trace: Trace, supplied: unknown, options: { processId?: string; reference?: Trace; referenceProcess?: string; index?: TraceIndex; referenceIndex?: TraceIndex } = {}): VerificationResult {
   let policy: VerificationPolicy;
   try { policy = VerificationPolicySchema.parse(supplied); }
   catch { throw new UserError('Invalid configuration verification policy.', 65); }
@@ -64,7 +65,9 @@ export function verifyTrace(trace: Trace, supplied: unknown, options: { processI
   const info = trace.processes.find(p => p.id === processId);
   const complete = trace.capture.status === 'complete' && !!info?.ended;
   const insensitive = (info?.caseMode || trace.capture.caseMode) === 'insensitive';
-  const events = trace.events.filter(e => e.processId === processId);
+  const index = options.index?.assertTrace(trace) || new TraceIndex(trace);
+  const referenceIndex = options.reference ? options.referenceIndex?.assertTrace(options.reference) || new TraceIndex(options.reference) : undefined;
+  const events = index.events(processId);
   const keys = [...new Set([...events.flatMap(e => e.key ? [e.key] : []), ...trace.capture.watch.filter(k => !/[*?]/.test(k)).map(k => insensitive ? k.toUpperCase() : k)])].sort();
   const checks: VerificationCheck[] = [];
   const evidenceCache = new Map<string, ReturnType<typeof evidenceFor>>();
@@ -83,11 +86,12 @@ export function verifyTrace(trace: Trace, supplied: unknown, options: { processI
   for (const notice of policy.coverage.forbidNotices) add('coverage.forbidNotices', trace.capture.notices.includes(notice) ? 'violation' : complete ? 'pass' : 'inconclusive', trace.capture.notices.includes(notice) ? `Forbidden capture notice: ${notice}.` : `Notice ${notice} was not captured.`);
   const loadersRemoved = trace.capture.notices.includes('loader_details_removed');
   for (const [pattern, rule] of Object.entries(policy.rules)) {
-    const matching = keys.filter(key => globToRegex(pattern, insensitive).test(key));
+    const selector = globToRegex(pattern, insensitive);
+    const matching = keys.filter(key => selector.test(key));
     if (!matching.length) { add('selector', 'inconclusive', 'Rule matched no captured key. Add a literal --watch selector before asserting absence.', pattern); continue; }
     for (const key of matching) {
       let evidence = evidenceCache.get(key);
-      if (!evidence) { evidence = evidenceFor(trace, key, processId); evidenceCache.set(key, evidence); }
+      if (!evidence) { evidence = evidenceFor(trace, key, processId, index); evidenceCache.set(key, evidence); }
       const actual = evidence.events.filter(e => ['baseline', 'read', 'write', 'delete'].includes(e.operation));
       const consumed = evidence.reads.length ? evidence.reads : actual.length ? [actual.at(-1)!] : [];
       const usable = complete && actual.length > 0;
@@ -138,7 +142,7 @@ export function verifyTrace(trace: Trace, supplied: unknown, options: { processI
       if (rule.consistentProvenance) {
         if (!options.reference) { add('consistentProvenance', 'inconclusive', 'A reference trace is required for paired provenance verification.', key); continue; }
         let other = referenceCache.get(key);
-        if (!other) { other = evidenceFor(options.reference, key, options.referenceProcess); referenceCache.set(key, other); }
+        if (!other) { other = evidenceFor(options.reference, key, options.referenceProcess, referenceIndex); referenceCache.set(key, other); }
         const a = evidence.reads.map(originIdentity), b = other.reads.map(originIdentity);
         const unknown = !a.length || !b.length || a.some(x => !x) || b.some(x => !x)
           || [...evidence.reads, ...other.reads].some(e => level[e.origin?.confidence || 'unknown'] < level[rule.minimumConfidence])

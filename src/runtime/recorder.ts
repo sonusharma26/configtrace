@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { WatchSet, PathScrubber, fingerprint, sameValue } from '../core/privacy';
+import { WatchSet, PathScrubber, createFingerprinter, sameValue } from '../core/privacy';
 import { AdapterManifestSchema, type AdapterManifest, type Observation, type Origin, type SafeValue, type Notice, type ProcessInfo, type StreamRecord } from '../core/schema';
 import { captureSite } from './callsite';
 import type { RuntimeConfig } from './api';
@@ -49,6 +49,7 @@ export class Recorder {
   readonly paths: PathScrubber;
   readonly process: ProcessInfo;
   private readonly writer: StreamWriter;
+  private readonly fingerprintValue: ReturnType<typeof createFingerprinter>;
   private readonly start = process.hrtime.bigint();
   private readonly states = new Map<string, State>();
   private readonly keys = new Set<string>();
@@ -65,6 +66,7 @@ export class Recorder {
   constructor(readonly config: RuntimeConfig, instanceId: string, parentId?: string, worker?: { threadId: number; environmentMode: ProcessInfo['environmentMode'] }) {
     this.watch = new WatchSet(config.watch, process.platform === 'win32' && !worker);
     this.paths = new PathScrubber(config.root, config.comparison.secret);
+    this.fingerprintValue = createFingerprinter(config.comparison);
     this.process = {
       id: instanceId, parentId, role: worker ? 'worker' : parentId ? 'child' : 'root',
       threadId: worker?.threadId, environmentMode: worker?.environmentMode,
@@ -85,7 +87,7 @@ export class Recorder {
   }
   currentOrigin(key: string): Origin | undefined { return this.origins.at(-1)?.(key); }
   token(key: string, value: string | undefined): SafeValue {
-    return fingerprint(this.config.comparison, this.watch.canonical(key), value);
+    return this.fingerprintValue(this.watch.canonical(key), value);
   }
   site(): Observation['site'] { return this.suppress(() => captureSite(this.paths, this.config.sourceMaps)); }
   latestId(key: string): string | undefined { return this.states.get(this.watch.canonical(key))?.eventId; }

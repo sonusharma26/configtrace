@@ -1,6 +1,6 @@
 {
   "name": "configproof",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Local-first configuration provenance, runtime contracts, deterministic diagnosis, and read-only agent evidence for Node.js",
   "license": "MIT",
   "repository": {
@@ -34,10 +34,10 @@
   },
   "files": [
     "dist",
-    "fixtures",
     "policies",
     "README.md",
     "LICENSE",
+    "SECURITY.md",
     "docs/ARCHITECTURE.md",
     "docs/COMPATIBILITY.md",
     "docs/PRIVACY.md",
@@ -51,7 +51,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test tests/*.test.cjs",
     "demo": "node dist/cli.js demo stale-env",
-    "clean": "node scripts/clean.cjs"
+    "clean": "node scripts/clean.cjs",
+    "test:optimization": "node --test tests/optimization.test.cjs",
+    "bench:source": "node bench/run.cjs --source",
+    "bench": "node bench/run.cjs",
+    "bench:package": "node bench/package-size.cjs",
+    "bench:capture": "node bench/capture.cjs",
+    "bench:check": "node bench/check-regression.cjs"
   },
   "dependencies": {
     "zod": "^3.25.76",

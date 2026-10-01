@@ -1,10 +1,9 @@
-import { CompactReport, compactBrowserScript } from './compact';
-import { TraceIndex } from '../core/event-index';
-import { buildProvenance, type ProvenanceGraph } from '../analysis/provenance';
-import { diagnoseTraces } from '../analysis/diagnose';
+// Original 0.3.1 computation from commit 0f066c52; only import paths are adapted.
+import { buildProvenance, type ProvenanceGraph } from './provenance';
+import { diagnoseTraces } from './diagnose';
 import { createHash } from 'node:crypto';
-import type { Trace, Observation, SafeValue } from '../core/schema';
-import { diffTraces, originLabel, siteLabel, valueLabel, type TraceDiff } from '../core/analyze';
+import type { Trace, Observation, SafeValue } from '../../src/core/schema';
+import { diffTraces, originLabel, siteLabel, valueLabel, type TraceDiff } from './analyze';
 
 const DISPLAY_LIMIT = 2000;
 export function escapeHtml(value: unknown): string {
@@ -19,7 +18,7 @@ a{color:var(--green)}header{border-bottom:3px solid var(--ink);padding:28px 5vw 
 .graph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px;margin:20px 0}.graph-node{border:1px solid var(--line);padding:14px;background:#fffdf7;min-width:0;overflow-wrap:anywhere}.graph-node h3{font:600 13px ui-monospace,monospace;margin:8px 0}.graph-node[data-confidence="unknown"]{border-style:dashed}.graph-node:target,.event:target{outline:3px solid var(--accent);outline-offset:3px}.graph-edge a{overflow-wrap:anywhere}.scorecard{border-top:2px solid var(--ink);padding:16px 0}.scorecard ol{margin:10px 0;padding-left:22px}.stage{font:11px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.1em}.confidence-key{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 
 `;
-const script = compactBrowserScript + `
+const script = `
 (()=>{const q=document.getElementById('search'),op=document.getElementById('operation'),proc=document.getElementById('context'),count=document.getElementById('visible-count');
 const items=Array.from(document.querySelectorAll('.event,.graph-node'));
 function view(name){for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==name;for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===name));}
@@ -34,11 +33,11 @@ for(const link of document.querySelectorAll('[data-jump]'))link.addEventListener
 filter();})();
 `;
 
-function shell(title: string, subtitle: string, body: string, compact: CompactReport): string {
+function shell(title: string, subtitle: string, body: string): string {
   const styleHash = createHash('sha256').update(css).digest('base64');
   const scriptHash = createHash('sha256').update(script).digest('base64');
   const csp = `default-src 'none'; script-src 'sha256-${scriptHash}'; style-src 'sha256-${styleHash}'; base-uri 'none'; form-action 'none'; connect-src 'none'`;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}"><title>${escapeHtml(title)} · ConfigProof</title><style>${css}</style></head><body><header><div><div class="wordmark">CONFIGPROOF / EVIDENCE FILE</div><h1>${escapeHtml(title)}</h1><p class="subtitle">${escapeHtml(subtitle)}</p></div><div class="edition">CP—04<br>LOCAL / OFFLINE<br>NO RAW VALUES</div></header><main><noscript><p class="notice">JavaScript is required to expand the offline timeline and graph. Summaries and coverage remain below; use the CLI or source JSON for full evidence.</p></noscript>${body}<footer class="foot">ConfigProof 0.4.0 · A complete stream is not complete runtime coverage. Matching observations support an inference, not universal provenance. Review paths and key names before sharing. No external assets, scripts, fonts, or network requests.</footer></main>${compact.data()}<script>${script}</script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}"><meta name="referrer" content="no-referrer"><title>${escapeHtml(title)} · ConfigProof</title><style>${css}</style></head><body><header><div><div class="wordmark">CONFIGPROOF / EVIDENCE FILE</div><h1>${escapeHtml(title)}</h1><p class="subtitle">${escapeHtml(subtitle)}</p></div><div class="edition">CP—03<br>LOCAL / OFFLINE<br>NO RAW VALUES</div></header><main>${body}<footer class="foot">ConfigProof 0.3.1 · A complete stream is not complete runtime coverage. Matching observations support an inference, not universal provenance. Review paths and key names before sharing. No external assets, scripts, fonts, or network requests.</footer></main><script>${script}</script></body></html>`;
 }
 function badge(status: string): string { return `<span class="badge ${escapeHtml(status)}">${escapeHtml(status)}</span>`; }
 function equality(status: string): string { return `<span class="mono ${escapeHtml(status)}">${escapeHtml(status)}</span>`; }
@@ -51,30 +50,30 @@ function labels(): (value: SafeValue | undefined, key: string, domain: string) =
     return `${seen.get(identity)} · ${value.empty ? 'empty · ' : ''}masked`;
   };
 }
+function timeline(events: Observation[], domain: string, label: ReturnType<typeof labels>, graphIds: Set<string> = new Set(), prefix = ''): string {
+  return `<ol class="timeline">${events.map(e => {
+    const search = [e.key, e.operation, e.processId, siteLabel(e), originLabel(e)].join(' ').toLowerCase();
+    return `<li class="event" id="event${prefix}-${escapeHtml(e.id)}" data-process="${escapeHtml(e.processId)}" data-op="${escapeHtml(e.operation)}" data-search="${escapeHtml(search)}"><div class="event-top"><time>+${e.at.toFixed(3)} ms</time>${badge(e.operation)}<span class="event-key mono">${escapeHtml(e.key || (e.operation === 'load' ? 'loader observation' : e.operation === 'boundary' ? 'failure boundary' : 'execution context boundary'))}</span><span class="mono small">${escapeHtml(label(e.value, e.key || '', domain))}</span></div><div class="event-body"><div>${escapeHtml(originLabel(e))}${e.outcome ? ' · ' + escapeHtml(e.outcome) : ''}</div><div class="mono muted">${escapeHtml(siteLabel(e))}</div>${e.candidate ? `<div>Candidate: <span class="mono">${escapeHtml(label(e.candidate, e.key || '', domain))}</span></div>` : ''}${e.causedBy ? `<div class="small muted">Inferred link to ${escapeHtml(e.causedBy)}</div>` : ''}${graphIds.has(`event:${e.id}`) ? `<a class="small" data-jump="provenance" href="#node-event:${escapeHtml(e.id)}">View provenance node</a>` : ''}${e.childId ? `<div class="small mono">Child ${escapeHtml(e.childId)}</div>` : ''}</div></li>`;
+  }).join('')}</ol>`;
+}
 function coverage(trace: Trace): string {
   return `<div class="section-head"><h2>Observation boundaries</h2><span class="small muted">Not a coverage percentage</span></div><div class="coverage">${trace.coverage.map(c => `<article><h3>${escapeHtml(c.feature)} ${badge(c.status)}</h3><div class="reasons mono">${c.reasons.map(x => escapeHtml(x.replace(/_/g, ' '))).join('<br>') || 'No adapter observation recorded.'}</div></article>`).join('')}</div>`;
 }
 function toolbar(trace?: Trace): string {
   return `<div class="toolbar"><label for="search">Find evidence</label><input id="search" type="search" placeholder="Key, file, process, or origin" autocomplete="off"><label for="operation" class="small">Operation</label><select id="operation"><option value="">All</option>${['baseline','read','write','delete','candidate','skip','load','child-spawn','worker-spawn','boundary'].map(x => `<option>${x}</option>`).join('')}</select>${trace ? `<label for="context" class="small">Context</label><select id="context"><option value="">All processes / Workers</option>${trace.processes.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.role)} / ${escapeHtml(p.id)}${p.threadId !== undefined ? ' / thread ' + p.threadId : ''}</option>`).join('')}</select>` : ''}<output id="visible-count" class="small muted" aria-live="polite"></output></div>`;
 }
-function graphPanel(graph: ProvenanceGraph, trace: Trace, shown: Set<string>, compact: CompactReport): string {
-  const needed = new Set(graph.nodes.flatMap(n => n.eventId ? [n.eventId] : []));
-  const operations = new Map<string, Observation['operation']>();
-  for (const e of trace.events) {
-    if (!needed.size) break;
-    if (needed.delete(e.id)) operations.set(e.id, e.operation);
-  }
-  compact.graph(graph, operations, shown);
+function graphPanel(graph: ProvenanceGraph, trace: Trace, shown: Set<string>): string {
+  const nodes = new Map(graph.nodes.map(n => [n.id, n]));
+  const operations = new Map(trace.events.map(e => [e.id, e.operation]));
   return `<section data-panel="provenance" hidden><div class="section-head"><h2>Provenance DAG</h2><span class="small">${graph.nodes.length} nodes / ${graph.edges.length} links</span></div>
 <p class="muted">Explore evidence nodes and typed links. Source-file nodes and read-site nodes are distinct. Filter by key or execution context, then jump to the same event in the timeline.</p>
 ${graph.truncated ? '<p class="notice">The graph reached its display limit. Use the graph CLI/API with a key/process filter for a focused graph; the complete trace remains in JSON.</p>' : ''}
 <div class="confidence-key"><span>Observed: captured operation</span><span>Derived: deterministic transformation</span><span>Inferred: supported relationship</span><span>Unknown: unavailable history</span></div>
-<div class="graph-grid" id="ct-graph-nodes"></div>
-<details open><summary>Evidence relationships</summary><div class="table-wrap"><table><thead><tr><th>From</th><th>Relationship</th><th>To</th><th>Confidence</th></tr></thead><tbody id="ct-graph-edges"></tbody></table></div></details>
+<div class="graph-grid">${graph.nodes.map(n => `<article class="graph-node" id="node-${escapeHtml(n.id)}" data-confidence="${escapeHtml(n.confidence)}" data-process="${escapeHtml(n.processId || '')}" data-op="${escapeHtml(n.eventId ? operations.get(n.eventId) || '' : '')}" data-search="${escapeHtml([n.label, n.key, n.processId, n.kind].join(' ').toLowerCase())}"><div class="stage">${escapeHtml(n.kind)}</div><h3>${escapeHtml(n.label)}</h3>${badge(n.confidence)}${n.state ? `<p class="small mono">${escapeHtml(n.state)}${n.empty ? ' / empty' : ''}</p>` : ''}${n.eventId && shown.has(n.eventId) ? `<p><a class="small" data-jump="timeline" href="#event-${escapeHtml(n.eventId)}">Timeline #${n.seq}</a></p>` : ''}</article>`).join('')}</div>
+<details open><summary>Evidence relationships</summary><div class="table-wrap"><table><thead><tr><th>From</th><th>Relationship</th><th>To</th><th>Confidence</th></tr></thead><tbody>${graph.edges.map(e => `<tr class="graph-edge" data-from="node-${escapeHtml(e.from)}" data-to="node-${escapeHtml(e.to)}"><td><a href="#node-${escapeHtml(e.from)}">${escapeHtml(nodes.get(e.from)?.label)}</a></td><td>${escapeHtml(e.relation)}</td><td><a href="#node-${escapeHtml(e.to)}">${escapeHtml(nodes.get(e.to)?.label)}</a></td><td>${badge(e.confidence)}</td></tr>`).join('')}</tbody></table></div></details>
 ${graph.caveats.map(c => `<p class="caveat small">${escapeHtml(c)}</p>`).join('')}</section>`;
 }
 export function renderTraceHtml(trace: Trace): string {
-  const compact = new CompactReport();
   const keys = [...new Set(trace.events.flatMap(e => e.key ? [e.key] : []))].sort();
   const shown = trace.events.slice(0, DISPLAY_LIMIT);
   const graph = buildProvenance(trace, { allProcesses: true, maxNodes: 1600, maxEdges: 4000 });
@@ -86,24 +85,21 @@ ${toolbar(trace)}<div class="keys">${keys.slice(0, 80).map(k => `<button type="b
 <nav class="views" aria-label="Evidence view"><button type="button" data-view="timeline" aria-pressed="true">Timeline</button><button type="button" data-view="provenance" aria-pressed="false">Provenance DAG</button></nav>
 <section data-panel="timeline">${shown.length < trace.events.length ? `<p class="notice">Display limit: ${shown.length} / ${trace.events.length} events. Filtering applies to rendered entries, not undisplayed JSON.</p>` : ''}
 <div class="section-head"><h2>Runtime timeline</h2><span class="small muted">Context-local order / no shared causal clock</span></div>
-${trace.processes.map((p, i) => `<details class="process" ${i === 0 ? 'open' : ''}><summary>${escapeHtml(p.role.toUpperCase())} / ${escapeHtml(p.entry)} <span class="small mono muted">${escapeHtml(p.id)}</span> ${badge(p.ended ? 'ended' : 'incomplete')}</summary><p class="small muted">${escapeHtml(p.node)} / ${escapeHtml(p.platform)}${p.threadId !== undefined ? ' / thread ' + p.threadId : ''}${p.environmentMode ? ' / env ' + escapeHtml(p.environmentMode) : ''} / ${p.eventsDropped} event(s) dropped</p>${compact.timeline(shown.filter(e => e.processId === p.id), trace.comparison.domainId, label, graphIds)}</details>`).join('')}</section>
-${graphPanel(graph, trace, new Set(shown.map(e => e.id)), compact)}
+${trace.processes.map((p, i) => `<details class="process" ${i === 0 ? 'open' : ''}><summary>${escapeHtml(p.role.toUpperCase())} / ${escapeHtml(p.entry)} <span class="small mono muted">${escapeHtml(p.id)}</span> ${badge(p.ended ? 'ended' : 'incomplete')}</summary><p class="small muted">${escapeHtml(p.node)} / ${escapeHtml(p.platform)}${p.threadId !== undefined ? ' / thread ' + p.threadId : ''}${p.environmentMode ? ' / env ' + escapeHtml(p.environmentMode) : ''} / ${p.eventsDropped} event(s) dropped</p>${timeline(shown.filter(e => e.processId === p.id), trace.comparison.domainId, label, graphIds)}</details>`).join('')}</section>
+${graphPanel(graph, trace, new Set(shown.map(e => e.id)))}
 ${coverage(trace)}<details><summary>Capture notices and adapter declarations</summary><p class="small mono">${trace.capture.notices.map(x => escapeHtml(x.replace(/_/g, ' '))).join('<br>')}</p>${(trace.adapters || []).map(a => `<p class="small">${escapeHtml(a.manifest.id)} / ${escapeHtml(a.installedVersion || 'version unavailable')} / ${escapeHtml(a.processId)} / validation: unverified</p>`).join('')}</details>`;
-  return shell('Follow the evidence.', 'Configuration sources, mutations, application reads, and the boundaries of what was observed.', body, compact);
+  return shell('Follow the evidence.', 'Configuration sources, mutations, application reads, and the boundaries of what was observed.', body);
 }
-export function renderDiffHtml(left: Trace, right: Trace, suppliedDiff?: TraceDiff): string {
-  const compact = new CompactReport();
-  const leftIndex = new TraceIndex(left), rightIndex = new TraceIndex(right);
-  const diff = suppliedDiff || diffTraces(left, right, { leftIndex, rightIndex });
+export function renderDiffHtml(left: Trace, right: Trace, diff: TraceDiff = diffTraces(left, right)): string {
   const label = labels();
-  const diagnosis = diagnoseTraces(left, right, { leftProcess: diff.leftProcess, rightProcess: diff.rightProcess, limit: 5, leftIndex, rightIndex });
+  const diagnosis = diagnoseTraces(left, right, { leftProcess: diff.leftProcess, rightProcess: diff.rightProcess, limit: 5 });
   const ranked = `<section class="scorecard"><h2>Strongest observed divergences</h2><p class="muted">${escapeHtml(diagnosis.conclusion)}</p>${diagnosis.findings.map(f => `<article><h3>${escapeHtml(f.key)} ${badge(f.confidence)}</h3><p class="small">${f.reasons.map(escapeHtml).join(' ')}</p></article>`).join('')}</section>`;
   const rows = diff.rows.map(r => `<tr><td>${escapeHtml(r.key)}</td><td>${equality(r.startup)}</td><td>${equality(r.lastRead)}</td><td>${equality(r.readSequence)}</td><td>${r.left.reads.length} → ${r.right.reads.length}</td><td>${escapeHtml(r.changes.join(', ') || 'No difference established')}</td></tr>`).join('');
-  const evidence = diff.rows.slice(0, 100).map(r => `<details><summary>${escapeHtml(r.key)} / paired evidence</summary><p class="small">Origins: ${escapeHtml(originLabel(r.left.lastRead))} → ${escapeHtml(originLabel(r.right.lastRead))}</p><div class="pair"><section><h3>RUN A</h3>${compact.timeline(r.left.events.slice(0, 40), left.comparison.domainId, label, new Set(), '-a')}</section><section><h3>RUN B</h3>${compact.timeline(r.right.events.slice(0, 40), right.comparison.domainId, label, new Set(), '-b')}</section></div><p class="small muted">Showing up to 40 events per side. ${r.left.events.length} / ${r.right.events.length} retained for this key. Sequence equality: ${escapeHtml(r.readSequence)}.</p></details>`).join('');
+  const evidence = diff.rows.slice(0, 100).map(r => `<details><summary>${escapeHtml(r.key)} / paired evidence</summary><p class="small">Origins: ${escapeHtml(originLabel(r.left.lastRead))} → ${escapeHtml(originLabel(r.right.lastRead))}</p><div class="pair"><section><h3>RUN A</h3>${timeline(r.left.events.slice(0, 40), left.comparison.domainId, label, new Set(), '-a')}</section><section><h3>RUN B</h3>${timeline(r.right.events.slice(0, 40), right.comparison.domainId, label, new Set(), '-b')}</section></div><p class="small muted">Showing up to 40 events per side. ${r.left.events.length} / ${r.right.events.length} retained for this key. Sequence equality: ${escapeHtml(r.readSequence)}.</p></details>`).join('');
   const body = `<div class="notice"><strong>${diff.sameDomain ? 'SHARED COMPARISON DOMAIN' : 'UNRELATED DOMAINS — VALUE EQUALITY UNKNOWN'}</strong><br>Compare captured evidence, not a claim that either execution was fully observed.</div>
 <div class="stats"><div class="stat"><strong>${diff.rows.length}</strong><span>Keys compared</span></div><div class="stat"><strong>${diff.rows.filter(r => r.changes.length).length}</strong><span>Evidence differences</span></div><div class="stat"><strong>${diff.coverageChanged ? 'Changed' : 'Same manifest'}</strong><span>Coverage declarations</span></div></div>
 ${ranked}${toolbar()}<p class="small mono">A: ${escapeHtml(diff.leftProcess || 'not observed')} · B: ${escapeHtml(diff.rightProcess || 'not observed')}</p><div class="table-wrap"><table><thead><tr><th>Key</th><th>At preload</th><th>Last read</th><th>Read sequence</th><th>Read count</th><th>What changed</th></tr></thead><tbody>${rows}</tbody></table></div>
 <div class="section-head"><h2>Read the difference.</h2><span class="small muted">Event presence is not causality</span></div>${diff.rows.length > 100 ? '<p class="notice">Detail display limit: the first 100 keys are expanded below. The summary table and source artifacts include the remaining keys.</p>' : ''}${evidence}
 <div class="section-head"><h2>Interpretation limits</h2></div>${diff.caveats.map(c => `<p class="caveat">${escapeHtml(c)}</p>`).join('')}${coverage(left)}${coverage(right)}`;
-  return shell('Two runs. One question.', 'What changed in the recorded configuration evidence between execution A and execution B?', body, compact);
+  return shell('Two runs. One question.', 'What changed in the recorded configuration evidence between execution A and execution B?', body);
 }

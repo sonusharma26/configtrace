@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { StreamRecordSchema, SCHEMA_VERSION, TOOL_VERSION, MAX_ARTIFACT_BYTES, MAX_EVENTS, MAX_PROCESSES,
   type Trace, type Notice, type Coverage, type ProcessInfo, type Observation, type AdapterDeclaration } from './schema';
-import { readBounded } from './io';
+import { readLinesBounded, AggregateReadLimit } from './json-lines';
 import type { RuntimeConfig } from '../runtime/api';
 
 export function coverageFor(notices: Notice[]): Coverage[] {
@@ -33,45 +33,49 @@ export function collectTrace(config: RuntimeConfig, result: Trace['result']): Tr
   files.sort((a, b) => a.startsWith(config.rootId) ? -1 : b.startsWith(config.rootId) ? 1 : a.localeCompare(b));
   if (files.length > MAX_PROCESSES) notices.add('process_limit');
   for (const file of files.slice(0, MAX_PROCESSES)) {
-    let raw: string;
-    try { raw = readBounded(path.join(config.directory, file), config.maxBytes); }
-    catch { notices.add('invalid_stream'); continue; }
-    aggregate += Buffer.byteLength(raw);
-    if (aggregate > MAX_ARTIFACT_BYTES / 2) { notices.add('aggregate_limit'); break; }
     let info: ProcessInfo | undefined;
     let ended = false;
     let sequence = -1;
     const seen = new Map<string, Observation>();
-    for (const line of raw.split('\n')) {
-      if (!line) continue;
-      try {
-        const record = StreamRecordSchema.parse(JSON.parse(line));
-        if (ended) { notices.add('invalid_stream'); break; }
-        if (record.type === 'start') {
-          if (info || record.process.id + '.jsonl' !== file) { notices.add('invalid_stream'); break; }
-          info = { ...record.process, ended: false, exitCode: null };
-          processes.push(info);
-        } else if (!info) { notices.add('invalid_stream'); break; }
-        else if (record.type === 'notice') notices.add(record.notice);
-        else if (record.type === 'adapter') {
-          if (record.declaration.processId !== info.id || adapters.length >= 512) notices.add('invalid_stream');
-          else adapters.push(record.declaration);
-        }
-        else if (record.type === 'end') {
-          info.ended = true; info.exitCode = record.exitCode; info.eventsDropped = record.eventsDropped; ended = true;
-          if (record.eventsDropped) notices.add('events_dropped');
-        } else {
-          const e = record.event;
-          if (e.processId !== info.id || e.id !== `${info.id}:${e.seq}` || e.seq <= sequence || seen.has(e.id)) { notices.add('invalid_stream'); break; }
-          sequence = e.seq;
-          if (events.length >= MAX_EVENTS) { notices.add('aggregate_limit'); continue; }
-          if (e.causedBy && (!seen.has(e.causedBy) || seen.get(e.causedBy)?.key !== e.key)) {
-            delete e.causedBy; e.origin = { kind: 'unknown', confidence: 'unknown' }; notices.add('invalid_stream');
+    try {
+      for (const line of readLinesBounded(path.join(config.directory, file), { maxBytes: config.maxBytes,
+        remainingBytes: MAX_ARTIFACT_BYTES / 2 - aggregate, onSize: bytes => { aggregate += bytes; } })) {
+        if (!line) continue;
+        try {
+          const record = StreamRecordSchema.parse(JSON.parse(line));
+          if (ended) { notices.add('invalid_stream'); break; }
+          if (record.type === 'start') {
+            if (info || record.process.id + '.jsonl' !== file) { notices.add('invalid_stream'); break; }
+            info = { ...record.process, ended: false, exitCode: null };
+            processes.push(info);
+          } else if (!info) { notices.add('invalid_stream'); break; }
+          else if (record.type === 'notice') notices.add(record.notice);
+          else if (record.type === 'adapter') {
+            if (record.declaration.processId !== info.id || adapters.length >= 512) notices.add('invalid_stream');
+            else adapters.push(record.declaration);
           }
-          seen.set(e.id, e);
-          events.push(e);
-        }
-      } catch { notices.add('invalid_stream'); break; }
+          else if (record.type === 'end') {
+            info.ended = true; info.exitCode = record.exitCode; info.eventsDropped = record.eventsDropped; ended = true;
+            if (record.eventsDropped) notices.add('events_dropped');
+          } else {
+            const e = record.event;
+            if (e.processId !== info.id || e.id !== `${info.id}:${e.seq}` || e.seq <= sequence || seen.has(e.id)) { notices.add('invalid_stream'); break; }
+            sequence = e.seq;
+            if (events.length >= MAX_EVENTS) { notices.add('aggregate_limit'); continue; }
+            if (e.causedBy && (!seen.has(e.causedBy) || seen.get(e.causedBy)?.key !== e.key)) {
+              delete e.causedBy; e.origin = { kind: 'unknown', confidence: 'unknown' }; notices.add('invalid_stream');
+            }
+            seen.set(e.id, e);
+            events.push(e);
+          }
+        } catch { notices.add('invalid_stream'); break; }
+      }
+    } catch (error) {
+      if (error instanceof AggregateReadLimit) { notices.add('aggregate_limit'); break; }
+      notices.add('invalid_stream');
+      // Already parsed evidence remains useful, but a changing file cannot be complete.
+      if (info) info.ended = false;
+      ended = false;
     }
     if (!ended) notices.add('missing_footer');
   }

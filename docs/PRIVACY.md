@@ -14,4 +14,10 @@ Application stdout/stderr are inherited, not captured or sanitized. Uncaught exc
 
 Windows permissions and race behavior require testing. Regular-file and size checks reject direct symlink inputs where implemented, but do not establish a sandbox against same-user races, malicious ancestors, or a cooperating application. Same-privilege code can inspect or tamper with recorder/session state. Artifacts are unsigned and not tamper-evident.
 
-No canary tests, dependency audits, secret scans, runtime privacy validation, or penetration tests were executed for this source-only delivery. See VALIDATION.md before using real credentials.
+Synthetic checks exercise HMAC framing, query stripping and token-free HTML projection. They are not a penetration test or permission to use production credentials. Follow VALIDATION.md and use synthetic values for release checks.
+
+## Optimization cache boundary
+
+The recorder retains decoded comparison-key bytes for its own lifetime but does not memoize raw environment values. This changes setup allocation, not the existing local-secret/same-privilege threat model. Path caches discard query/fragment text before retaining keys and have 512-entry budgets; successful source-map locations also have 512-entry budgets per scrubber and return copies. Metadata paths are still potentially sensitive. Caches are not a secure-erasure mechanism.
+
+Analysis indexes hold references to already-recorded masked evidence. A 4,096-string intern pool and a 32,768-reference/64-summary budget bound additional retained label caches; the underlying trace and index scale with event count. Only authorizer-owned frozen MCP snapshots retain automatic indexes. Compact report payloads are explicit display projections without raw HMAC tokens, not full traces hidden in HTML. Script-like metadata is escaped at serialization and inserted as DOM text; arbitrary metadata still needs human review.

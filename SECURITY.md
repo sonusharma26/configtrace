@@ -12,7 +12,7 @@ It does not sanitize application stdout/stderr, isolate secrets from application
 
 Input regular-file/size/schema checks, output exclusive creation, bounded capture, CSP and metadata escaping are defense-in-depth, not a sandbox or proof of safety. Same-user filesystem races and hostile applications remain outside the protection claim. Do not expose the stdio server through an unauthenticated bridge. Review even explicitly authorized artifacts for sensitive metadata and prompt-injection text. Tool annotations do not substitute for authorization.
 
-Artifacts are unsigned. The source archive checksum manifest provides integrity comparison, not authorship authentication or tamper-proof runtime evidence.
+Artifacts are unsigned. Package integrity metadata does not provide authorship authentication or tamper-proof runtime evidence.
 
 ## Reporting concerns
 

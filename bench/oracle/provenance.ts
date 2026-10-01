@@ -1,8 +1,9 @@
+// Original 0.3.1 computation from commit 0f066c52; only import paths are adapted.
 import { createHash } from 'node:crypto';
-import type { Trace, Observation, Origin } from '../core/schema';
-import { sameValue } from '../core/privacy';
-import { processFor, siteLabel } from '../core/analyze';
-import { UserError } from '../core/io';
+import type { Trace, Observation, Origin } from '../../src/core/schema';
+import { sameValue } from '../../src/core/privacy';
+import { processFor, siteLabel } from './analyze';
+import { UserError } from '../../src/core/io';
 
 export type EvidenceConfidence = Origin['confidence'];
 export type ProvenanceNodeKind = 'process' | 'worker' | 'key' | 'startup' | 'candidate' | 'application' | 'mutation' | 'read' | 'loader' | 'source' | 'read-site' | 'adapter' | 'boundary' | 'unknown';
@@ -36,6 +37,7 @@ export function buildProvenance(trace: Trace, options: ProvenanceOptions = {}): 
   const contexts = new Map(trace.processes.map(p => [p.id, p]));
   const caseFor = (pid: string) => contexts.get(pid)?.caseMode || trace.capture.caseMode;
   const keyMatches = (e: Observation) => !options.key || e.key === (caseFor(e.processId) === 'insensitive' ? options.key.toUpperCase() : options.key);
+  const selected = trace.events.filter(e => (!chosen || e.processId === chosen) && (keyMatches(e) || !e.key && ['child-spawn', 'worker-spawn', 'boundary'].includes(e.operation)));
   const nodes = new Map<string, ProvenanceNode>();
   const edges: ProvenanceEdge[] = [];
   const edgeIds = new Set<string>();
@@ -56,8 +58,7 @@ export function buildProvenance(trace: Trace, options: ProvenanceOptions = {}): 
   const state = new Map<string, Observation>();
   const candidate = new Map<string, Observation>();
   const fileLoads = new Map<string, Observation>();
-  for (const e of trace.events) {
-    if (!((!chosen || e.processId === chosen) && (keyMatches(e) || !e.key && ['child-spawn', 'worker-spawn', 'boundary'].includes(e.operation)))) continue;
+  for (const e of selected) {
     const eid = `event:${e.id}`, pid = `process:${e.processId}`;
     const slot = JSON.stringify([e.processId, e.key]);
     const confidence = e.origin?.confidence || 'observed';

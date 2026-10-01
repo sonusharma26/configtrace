@@ -1,9 +1,9 @@
-import { TraceIndex, type ComparisonIndexes } from '../core/event-index';
-import type { Trace, Observation } from '../core/schema';
-import { compareValue, diffTraces } from '../core/analyze';
-import { terminalSafe, UserError } from '../core/io';
+// Original 0.3.1 computation from commit 0f066c52; only import paths are adapted.
+import type { Trace, Observation } from '../../src/core/schema';
+import { compareValue, diffTraces, originLabel, siteLabel } from './analyze';
+import { terminalSafe, UserError } from '../../src/core/io';
 
-export interface DiagnosisOptions extends ComparisonIndexes { leftProcess?: string; rightProcess?: string; beforeSeq?: number; limit?: number }
+export interface DiagnosisOptions { leftProcess?: string; rightProcess?: string; beforeSeq?: number; limit?: number }
 export interface EvidenceReference { run: 'broken' | 'working'; processId: string; eventId: string }
 export interface DiagnosisFinding {
   key: string; classification: 'provenance-divergence' | 'value-divergence' | 'loader-divergence' | 'mutation-divergence' | 'read-path-divergence';
@@ -22,8 +22,8 @@ export interface Diagnosis {
   findings: DiagnosisFinding[]; earliestObservedDivergence?: { key: string; seq: number };
   rawValuesAvailable: false; conclusion: string; caveats: string[];
 }
-const loaderSignature = (events: Observation[], index: TraceIndex) => JSON.stringify(events.filter(e => e.operation === 'skip'
-  || e.operation === 'write' && ['dotenv', 'native-env'].includes(e.origin?.kind || '')).map(e => [e.operation, e.outcome, index.origin(e)]));
+const loaderSignature = (events: Observation[]) => JSON.stringify(events.filter(e => e.operation === 'skip'
+  || e.operation === 'write' && ['dotenv', 'native-env'].includes(e.origin?.kind || '')).map(e => [e.operation, e.outcome, originLabel(e)]));
 const references = (events: Array<Observation | undefined>, run: EvidenceReference['run']): EvidenceReference[] => {
   const seen = new Set<string>();
   return events.filter((e): e is Observation => !!e && !seen.has(e.id) && !!seen.add(e.id)).slice(0, 10)
@@ -33,10 +33,8 @@ const references = (events: Array<Observation | undefined>, run: EvidenceReferen
 export function diagnoseTraces(broken: Trace, working: Trace, options: DiagnosisOptions = {}): Diagnosis {
   const limit = options.limit ?? 10;
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new UserError('Diagnosis limit must be between 1 and 100.');
-  const leftIndex = options.leftIndex?.assertTrace(broken) || new TraceIndex(broken);
-  const rightIndex = options.rightIndex?.assertTrace(working) || new TraceIndex(working);
-  const diff = diffTraces(broken, working, { ...options, leftIndex, rightIndex });
-  const selected = leftIndex.events(diff.leftProcess);
+  const diff = diffTraces(broken, working, options);
+  const selected = broken.events.filter(e => e.processId === diff.leftProcess);
   const marker = selected.find(e => e.operation === 'boundary');
   if (options.beforeSeq !== undefined && (!Number.isInteger(options.beforeSeq) || !selected.some(e => e.seq === options.beforeSeq))) throw new UserError('--before-seq must identify an observed event in the selected failing context.', 65);
   const boundary: Diagnosis['boundary'] = options.beforeSeq !== undefined ? { kind: 'manual-sequence', seq: options.beforeSeq }
@@ -44,31 +42,30 @@ export function diagnoseTraces(broken: Trace, working: Trace, options: Diagnosis
   let readKeys = 0;
   const findings: DiagnosisFinding[] = [];
   for (const row of diff.rows) {
-    const leftSummary = leftIndex.summary(row.left), rightSummary = rightIndex.summary(row.right);
     const inBoundary = row.left.events.filter(e => boundary.seq === undefined || e.seq <= boundary.seq);
     const leftReads = inBoundary.filter(e => e.operation === 'read' && e.purpose !== 'loader');
     if (!leftReads.length) continue;
     readKeys++;
     const read = leftReads.at(-1)!;
     const leftEvents = inBoundary.filter(e => e.seq <= read.seq);
-    const rightSiteLabels = new Set(row.right.reads.flatMap((r, i) => r.site ? [rightSummary.readSites[i]] : []));
-    const sameSites = leftReads.filter((e, i) => e.site && rightSiteLabels.has(leftSummary.readSites[i]));
+    const rightSiteLabels = new Set(row.right.reads.filter(r => r.site).map(siteLabel));
+    const sameSites = leftReads.filter(e => e.site && rightSiteLabels.has(siteLabel(e)));
     // Align identical call-site occurrences, not unrelated final reads or OS timestamps.
     const rightSites = new Map<string, Observation[]>();
-    for (const [i, r] of row.right.reads.entries()) { const label = rightSummary.readSites[i]; const list = rightSites.get(label) || []; list.push(r); rightSites.set(label, list); }
+    for (const r of row.right.reads) { const label = siteLabel(r); const list = rightSites.get(label) || []; list.push(r); rightSites.set(label, list); }
     const occurrence = new Map<string, number>();
     let changedRead: Observation | undefined, comparedRead: Observation | undefined;
-    for (const [i, r] of leftReads.entries()) {
-      const label = leftSummary.readSites[i], position = occurrence.get(label) || 0;
+    for (const r of leftReads) {
+      const label = siteLabel(r), position = occurrence.get(label) || 0;
       occurrence.set(label, position + 1);
       const counterpart = r.site ? rightSites.get(label)?.[position] : undefined;
       if (counterpart && compareValue(r.value, counterpart.value, diff.sameDomain) === 'different' && !changedRead) { changedRead = r; comparedRead = counterpart; }
     }
-    const rightRead = comparedRead || (read.site ? rightSites.get(leftSummary.readSites[leftReads.length - 1])?.at(-1) : undefined) || row.right.lastRead;
+    const rightRead = comparedRead || (read.site ? rightSites.get(siteLabel(read))?.at(-1) : undefined) || row.right.lastRead;
     const rightEvents = row.right.events.filter(e => !rightRead || e.seq <= rightRead.seq);
     const startupChanged = row.startup === 'different';
-    const originChanged = !!rightRead && leftIndex.origin(changedRead || read) !== rightIndex.origin(rightRead);
-    const loaderOutcomeChanged = loaderSignature(leftEvents, leftIndex) !== loaderSignature(rightEvents, rightIndex);
+    const originChanged = !!rightRead && originLabel(changedRead || read) !== originLabel(rightRead);
+    const loaderOutcomeChanged = loaderSignature(leftEvents) !== loaderSignature(rightEvents);
     const writes = leftEvents.filter(e => ['write', 'delete'].includes(e.operation));
     const rightWrites = rightEvents.filter(e => ['write', 'delete'].includes(e.operation));
     const mutationOnlyInFailing = writes.length > 0 && rightWrites.length === 0;

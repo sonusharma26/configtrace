@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { TraceSchema, MAX_ARTIFACT_BYTES, type Trace } from './schema';
+import type { Trace } from './schema';
+import { MAX_ARTIFACT_BYTES } from './constants';
 
 export class UserError extends Error {
   constructor(message: string, public readonly exitCode = 64) { super(message); this.name = 'UserError'; }
@@ -43,16 +44,20 @@ export function writeNew(file: string, data: string): void {
 }
 
 export function readTrace(file: string): Trace {
-  try { return TraceSchema.parse(JSON.parse(readBounded(file))); }
+  try {
+    const { TraceSchema } = require('./schema') as typeof import('./schema');
+    return TraceSchema.parse(JSON.parse(readBounded(file)));
+  }
   catch (error) {
     if (error instanceof UserError) throw error;
     throw new UserError('Invalid, oversized, or unsupported ConfigProof artifact.', 65);
   }
 }
 export function writeTrace(file: string, trace: Trace): void {
+  const { TraceSchema } = require('./schema') as typeof import('./schema');
   const checked = TraceSchema.safeParse(trace);
   if (!checked.success) throw new UserError('Refusing to write an invalid trace artifact.', 74);
-  const data = JSON.stringify(checked.data, null, 2) + '\n';
+  const data = JSON.stringify(checked.data) + '\n';
   if (Buffer.byteLength(data) > MAX_ARTIFACT_BYTES) throw new UserError('Artifact exceeds the output size limit.', 74);
   writeNew(file, data);
 }

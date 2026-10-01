@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
-export const TOOL_VERSION = '0.3.1';
-export const SCHEMA_VERSION = 'configtrace/2';
-export const MAX_ARTIFACT_BYTES = 64 * 1024 * 1024;
-export const MAX_EVENTS = 100_000;
-export const MAX_PROCESSES = 64;
+import { MAX_EVENTS, MAX_PROCESSES } from './constants';
+export { TOOL_VERSION, SCHEMA_VERSION, MAX_ARTIFACT_BYTES, MAX_EVENTS, MAX_PROCESSES } from './constants';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,80}$/);
 const text = z.string().max(512);
@@ -112,7 +109,7 @@ export const AdapterDeclarationSchema = z.object({
 export type AdapterDeclaration = z.infer<typeof AdapterDeclarationSchema>;
 
 export const TraceSchema = z.object({
-  schemaVersion: z.enum(['configtrace/1', 'configtrace/2']), toolVersion: z.enum(['0.2.0', '0.3.0', '0.3.1']),
+  schemaVersion: z.enum(['configtrace/1', 'configtrace/2']), toolVersion: z.enum(['0.2.0', '0.3.0', '0.3.1', '0.4.0']),
   id,
   comparison: z.object({
     domainId: id, mode: z.enum(['hmac-sha256', 'export-hmac', 'none']),

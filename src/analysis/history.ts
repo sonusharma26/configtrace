@@ -1,3 +1,4 @@
+import { TraceIndex } from '../core/event-index';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Trace } from '../core/schema';
@@ -26,9 +27,11 @@ export function analyzeHistory(entries: HistoryEntry[], ordering: HistoryAnalysi
   const first = new Map<string, number>();
   const regressions: HistoryAnalysis['coverageRegressions'] = [];
   const weight = { unsupported: 0, 'not-observed': 1, limited: 2, active: 3 };
+  let leftIndex = new TraceIndex(entries[0].trace);
   for (let i = 1; i < entries.length; i++) {
     const a = entries[i - 1], b = entries[i];
-    const diff = diffTraces(a.trace, b.trace, { leftProcess: a.processId, rightProcess: b.processId });
+    const rightIndex = new TraceIndex(b.trace);
+    const diff = diffTraces(a.trace, b.trace, { leftProcess: a.processId, rightProcess: b.processId, leftIndex, rightIndex });
     const changes: DriftChange[] = [];
     for (const row of diff.rows) {
       const oldSites = new Set(row.left.reads.map(siteLabel)), oldOrigins = new Set(row.left.reads.map(originLabel));
@@ -52,6 +55,7 @@ export function analyzeHistory(entries: HistoryEntry[], ordering: HistoryAnalysi
     }
     if (b.trace.processes.reduce((n, p) => n + p.eventsDropped, 0) > a.trace.processes.reduce((n, p) => n + p.eventsDropped, 0)) reasons.push('Recorded dropped-event count increased.');
     if (reasons.length) regressions.push({ run: i, reasons });
+    leftIndex = rightIndex; // Retain at most the adjacent pair of indexes.
     transitions.push({ from: i - 1, to: i, sameDomain: diff.sameDomain, complete: diff.completeStreams, coverageChanged: diff.coverageChanged, changes });
   }
   return { schemaVersion: 'configtrace-history/1', ordering, rawValuesAvailable: false,
